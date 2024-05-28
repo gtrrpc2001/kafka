@@ -1,0 +1,44 @@
+version: '3.8'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:5.5.1    
+    container_name: zookeeper
+    ports:
+      - "${ZOOKEEPER_PORT}:${ZOOKEEPER_PORT}"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_PORT}
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:5.5.1
+    container_name: kafka
+    ports:
+      - "${KAFKA_PORT}:${KAFKA_PORT}"
+    environment:
+      KAFKA_BROKER_ID: 0
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:${${ZOOKEEPER_PORT}}
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${KAFKA_ADVERTISED_LISTENERS}
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:${KAFKA_PORT}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1                           
+    depends_on:
+      - zookeeper
+
+  akhq:
+    image: tchiotludo/akhq
+    container_name: akhq
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:          
+          connections:
+            my-cluster:
+              properties:
+                bootstrap.servers: "kafka:${KAFKA_PORT}"            
+                fetch.max.bytes: 57671680
+                max.partition.fetch.bytes: 57671680
+    ports:
+      - "${AKHQ_PORT}:${AKHQ_PORT}"
+    depends_on:
+      - kafka
+  
+  
+    
