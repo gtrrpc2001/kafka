@@ -1,36 +1,48 @@
+
+DATABASE_HOSTNAME="$HOST"
+DATABASE_PORT="$PORT"
+DATABASE_USER="$USER"
+DATABASE_PASSWORD="$PASSWORD" 
+DATABASE_SERVER_ID="$SERVER_ID"
+DATABASE_SERVER_NAME="$SERVER_NAME"
+DATABASE_INCLUDE_LIST="$DATABASE_LIST"
+KAFKA_BOOTSTRAP_SERVERS="$K_SERVERS"
+KAFKA_TOPIC="$K_TOPIC"
+DATABASE_SSL_MODE="disabled"
+DATABASE_SERVER_TIMEZONE="Asia/Seoul"
+
 /etc/confluent/docker/run &
 
 echo "Waiting for Kafka Connect to start..."
-while ! curl -s http://localhost:${CONNECT_PORT}/; do
+while ! curl -s http://localhost:8083/; do
   sleep 5
 done
 
 echo "Registering MySQL connector..."
-curl -X POST -H "Content-Type: application/json" --data '{
+RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" --data '{
   "name": "mysql-source",
   "config": {
     "connector.class": "io.debezium.connector.mysql.MySqlConnector",
     "tasks.max": "1",
-    "database.hostname": "${HOST}",
-    "database.port": "${PORT}",
-    "database.user": "${MSL_USERNAME}",
-    "database.password": "${MSL_PASSWORD}",
-    "database.server.id": "184054",
-    "database.server.name": "dbserver1",
-    "database.include.list": "${DBLIST}",
-    "database.history.kafka.bootstrap.servers": "${CONNECT_BOOTSTRAP_SERVERS}",
-    "database.history.kafka.topic": "schema-changes.mysql",
-    "database.ssl.mode": "disabled",
-    "database.serverTimezone": "Asia/Seoul",
-    "database.jdbc.url": "jdbc:mysql://${HOST}:${PORT}/?useSSL=false"
+    "database.hostname": "'"$DATABASE_HOSTNAME"'",
+    "database.port": "'"$DATABASE_PORT"'",
+    "database.user": "'"$DATABASE_USER"'",
+    "database.password": "'"$DATABASE_PASSWORD"'",
+    "database.server.id": "'"$DATABASE_SERVER_ID"'",
+    "database.server.name": "'"$DATABASE_SERVER_NAME"'",
+    "database.include.list": "'"$DATABASE_INCLUDE_LIST"'",
+    "database.history.kafka.bootstrap.servers": "'"$KAFKA_BOOTSTRAP_SERVERS"'",
+    "database.history.kafka.topic": "'"$KAFKA_TOPIC"'",
+    "database.ssl.mode": "'"$DATABASE_SSL_MODE"'",
+    "database.serverTimezone": "'"$DATABASE_SERVER_TIMEZONE"'"
   }
-}' http://localhost:${CONNECT_PORT}/connectors
+}' http://localhost:8083/connectors)
+
+if [ "$RESPONSE" -ne 201 ]; then
+  echo "Failed to register MySQL connector. HTTP response code: $RESPONSE"
+  exit 1
+else
+  echo "MySQL connector registered successfully."
+fi
 
 wait
-
-# if [ "$response" -ne 201 ]; then
-#     echo "MySQL 커넥터 등록 실패: HTTP 상태 코드 $response"
-#     exit 1
-# else
-#     echo "MySQL 커넥터 등록 성공"
-# fi

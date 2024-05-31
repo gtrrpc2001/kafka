@@ -4,7 +4,7 @@ services:
     image: kafka-connect-mysql:5.5.1
     container_name: connect_mysql_kafka
     ports:
-      - "${CONNECT_PORT}:${CONNECT_PORT}"
+      - "8083:8083"
     environment:
       CONNECT_BOOTSTRAP_SERVERS: host.docker.internal:9092
       CONNECT_REST_PORT: 8083
@@ -17,13 +17,17 @@ services:
       CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"      
-      CONNECT_LOG4J_ROOT_LOGLEVEL: "INFO" #DEBUG, ERROR
+      CONNECT_LOG4J_ROOT_LOGLEVEL: "DEBUG" #INFO, ERROR
       CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
       HOST: ${HOST}
       PORT: ${PORT}
-      MSL_USERNAME: ${MSL_USERNAME}
-      MSL_PASSWORD: ${MSL_PASSWORD}
-      DBLIST: ${DBLIST}
+      USER: ${USER}
+      PASSWORD: ${PASSWORD}
+      SERVER_ID: ${SERVER_ID}
+      SERVER_NAME: ${SERVER_NAME}
+      DATABASE_LIST: ${DATABASE_LIST}
+      K_SERVERS: ${K_SERVERS}
+      K_TOPIC: ${K_TOPIC}
     volumes:
       - ./run-kafka-connect.sh:/etc/kafka/run-kafka-connect.sh
     command:
